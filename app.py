@@ -18,7 +18,7 @@ def geocodio(address):
     except:
         mmsa = None
         print("ERROR: No Metropolitan/Micropolitan Statistical Area found for", location["results"][0]['formatted_address'])
-    return tract, county, mmsa
+    return tract, county, mmsa, location["results"][0]['formatted_address']
 
 ##################################################
 
@@ -32,9 +32,9 @@ search_term = st.text_input("Address:")
 # Process when user clicks button
 if st.button("Submit"):
     if search_term:
-        st.write(f"Gathering demographic data for: {search_term}")
+        st.write(f"Gathering demographic data...")
 
-        tract, county, mmsa = geocodio(search_term)
+        tract, county, mmsa, formatted_address = geocodio(search_term)
         
         # Simulate data processing (replace with your actual code)
         data = pd.DataFrame({
@@ -43,9 +43,14 @@ if st.button("Submit"):
         })
         
         # Display results
-        st.subheader("Demographic Summary")
-        st.write(f"Found {tract}, {county}, {mmsa} results")
-        
+        st.subheader(f"Demographic Summary for {formatted_address}")
+        st.write("Census Tract: {tract}")
+        st.write("County (Housing Market Area): {county}")
+        if mmsa is None:
+            st.write("No metropolitan statistical area/micropolitan statistical area to calculate Expanded Housing Market Area")
+        else:
+            st.write("Metro/Micropolitan Statistical Area (Expanded Housing Market Area): {mmsa}")
+
         # Show data table
         st.subheader("Data Table")
         st.dataframe(data)
