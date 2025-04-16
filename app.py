@@ -88,6 +88,7 @@ def census(year, state, county, tract, api_key):
                             }, inplace=True)
 
         df = df.transpose()
+        df.columns = ["Census Tract", "Housing Market Area", "Expanded Housing Market Area"]
         return(df)
     else:
         print("No metropolitan statistical area/micropolitan statistical area to calculate Expanded Housing Market Area")
@@ -105,6 +106,7 @@ def census(year, state, county, tract, api_key):
                             }, inplace=True)
 
         df = df.transpose()
+        df.columns = ["Census Tract", "Housing Market Area"]
         return(df)
 
 ##################################################
