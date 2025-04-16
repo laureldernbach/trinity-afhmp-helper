@@ -50,6 +50,7 @@ def census(year, state, county, tract, api_key):
     data=response.json()
     df_tract = pd.DataFrame(data[1:], columns=data[0])
     print("Census Tract: ", df_tract.loc[0, "NAME"])
+    formatted_tract = df_tract.loc[0, "NAME"]
     df_tract.loc[0, "NAME"] = "Census Tract"
 
     # COUNTY LEVEL
@@ -60,6 +61,7 @@ def census(year, state, county, tract, api_key):
     data=response.json()
     df_county = pd.DataFrame(data[1:], columns=data[0])
     print("County (Housing Market Area): ", df_county.loc[0, "NAME"])
+    formatted_county = df_county.loc[0, "NAME"]
     df_county.loc[0, "NAME"] = "Housing Market Area"
 
     # MMSA LEVEL
@@ -72,6 +74,7 @@ def census(year, state, county, tract, api_key):
         df_mmsa = pd.DataFrame(data[1:], columns=data[0])
         # the census variable comes from geocodio... save for later
         # print(f"M{census['metro_micro_statistical_area']['type'][1:]} Statistical Area (Expanded Housing Market Area): ", df_mmsa.loc[0, "NAME"])
+        formatted_mmsa = df_mmsa.loc[0, "NAME"]
         df_mmsa.loc[0, "NAME"] = "Expanded Housing Market Area"
 
         df = pd.concat([df_tract, df_county, df_mmsa])
@@ -89,7 +92,8 @@ def census(year, state, county, tract, api_key):
 
         df = df.transpose()
         df.columns = ["Census Tract", "Housing Market Area", "Expanded Housing Market Area"]
-        return(df)
+        df.drop(index="DEMOGRAPHIC", inplace=True)
+        return df, formatted_tract, formatted_county, formatted_mmsa
     else:
         print("No metropolitan statistical area/micropolitan statistical area to calculate Expanded Housing Market Area")
         df = pd.concat([df_tract, df_county])
@@ -107,7 +111,8 @@ def census(year, state, county, tract, api_key):
 
         df = df.transpose()
         df.columns = ["Census Tract", "Housing Market Area"]
-        return(df)
+        df.drop(index="DEMOGRAPHIC", inplace=True)
+        return df, formatted_tract, formatted_county, None
 
 ##################################################
 
@@ -130,31 +135,31 @@ if st.button("Submit"):
         #     'Category': ['A', 'B', 'C'],
         #     'Value': np.random.randn(3)
         # })
-        data = census("2023", state, county, tract, st.secrets["CENSUS_TOKEN"])
+        data, formatted_tract, formatted_county, formatted_mmsa = census("2023", state, county, tract, st.secrets["CENSUS_TOKEN"])
         
         # Display results
         st.subheader(f"Demographic Summary for {formatted_address}")
-        st.write(f"Census Tract: {tract}")
-        st.write(f"County (Housing Market Area): {county}")
+        st.write(f"Census Tract: {formatted_tract}")
+        st.write(f"County (Housing Market Area): {formatted_county}")
         if mmsa is None:
             st.write("No metropolitan statistical area/micropolitan statistical area to calculate Expanded Housing Market Area")
         else:
-            st.write(f"Metro/Micropolitan Statistical Area (Expanded Housing Market Area): {mmsa}")
+            st.write(f"Metro/Micropolitan Statistical Area (Expanded Housing Market Area): {formatted_mmsa}")
 
         # Show data table
         st.subheader("Data Table")
         st.dataframe(data)
         
-        # Download buttons
-        csv = data.to_csv(index=False).encode('utf-8')
+        # # Download buttons
+        # csv = data.to_csv(index=False).encode('utf-8')
         
-        # maybe use the full fip here for download
-        f = formatted_address.strip(" ")
-        st.download_button(
-            "Download Detailed CSV",
-            data=csv,
-            file_name=f"{f}_results.csv",
-            mime="text/csv"
-        )
+        # # maybe use the full fip here for download
+        # f = formatted_address.strip(" ")
+        # st.download_button(
+        #     "Download Detailed CSV",
+        #     data=csv,
+        #     file_name=f"{f}_results.csv",
+        #     mime="text/csv"
+        # )
     else:
         st.error("Please enter an address")
