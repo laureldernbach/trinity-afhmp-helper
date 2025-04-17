@@ -142,7 +142,7 @@ if st.button("Submit"):
         st.write(f"Census Tract: {formatted_tract}")
         st.write(f"County (Housing Market Area): {formatted_county}")
         if mmsa is None:
-            st.write("No metropolitan statistical area/micropolitan statistical area to calculate Expanded Housing Market Area")
+            st.write("No Metro/Micropolitan Statistical Area to calculate Expanded Housing Market Area")
         else:
             st.write(f"Metro/Micropolitan Statistical Area (Expanded Housing Market Area): {formatted_mmsa}")
 
