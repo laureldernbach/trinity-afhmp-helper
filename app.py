@@ -30,7 +30,7 @@ def county_map(year, county_name, state_fip, county_fip ):
     fig, ax = plt.subplots(figsize=(10, 10))
     selected.plot(ax=ax, edgecolor='red', facecolor='none', linewidth=2)
     ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.Mapnik, zoom=10)
-    ax.set_title(f"Map for {county_name}")
+    ax.set_title(f"WORKSHEET 1: Expanded Housing Market Area ({county_name})")
     plt.axis('off')
     #plt.show()
     return fig
@@ -61,7 +61,7 @@ def tract_map(year, state_fip, lng, lat, tract_name):
     fig, ax = plt.subplots(figsize=(10, 10))
     selected_tract.plot(ax=ax, edgecolor='red', facecolor='none', linewidth=2)
     ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.Mapnik)
-    ax.set_title(f"Map of Census Tract {tract_name}")
+    ax.set_title(f"WORKSHEET 1: Map of {tract_name}")
     plt.axis('off')
     #plt.show()
     return fig
@@ -84,7 +84,7 @@ def mmsa_map(year, cbsa_name):
     fig, ax = plt.subplots(figsize=(10, 10))
     this_cbsa.plot(ax=ax, facecolor='none', edgecolor='blue', linewidth=2)
     ctx.add_basemap(ax)
-    ax.set_title(f"(CBSA) {cbsa_name}")
+    ax.set_title(f"WORKSHEET 1: Expanded Housing Market Area ({cbsa_name})")
     plt.axis('off')
     #plt.show()
     return fig
@@ -237,9 +237,23 @@ if st.button("Submit"):
         # Show data table
         st.subheader("Data Table")
         st.dataframe(data)
+        st.write("Maps will appear below. They may take a moment to load.")
 
         fig1 = tract_map(YEAR,STATE_CODE, LNG, LAT, formatted_tract)
         st.pyplot(fig1)
+
+        # Save the plot to a buffer
+        buf = BytesIO()
+        fig1.savefig(buf, format="png")
+        buf.seek(0)
+
+        # Provide download button
+        st.download_button(
+            label="Download Map as PNG",
+            data=buf,
+            file_name=f"{formatted_tract.strip(' ')}.png",
+            mime="image/png"
+        )
         
         # # Download buttons
         # csv = data.to_csv(index=False).encode('utf-8')
