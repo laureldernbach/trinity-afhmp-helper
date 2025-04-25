@@ -27,10 +27,31 @@ def geocodio_helper(address):
         mmsa = None
         print("ERROR: No Metropolitan/Micropolitan Statistical Area found for", location["results"][0]['formatted_address'])
     return tract, county, state, mmsa, location["results"][0]['formatted_address']
-def tract_map():
-    pass
 
-def county_map(year, state_fip, lng, lat, tract_name):
+def county_map(year, county_name, state_fip, county_fip ):
+    # Download and unzip
+    tract_url = f"https://www2.census.gov/geo/tiger/TIGER{year}/COUNTY/tl_{year}_us_county.zip"
+    r = requests.get(tract_url, headers={"User-Agent": "Mozilla/5.0"})
+
+    with zipfile.ZipFile(BytesIO(r.content)) as z:
+        z.extractall(f"tl_{year}_us_county")
+
+    # Load census tracts for NY state
+    counties = gpd.read_file(f"tl_{year}_us_county/tl_{year}_us_county.shp").to_crs(epsg=4326)
+
+    selected = counties[(counties['STATEFP'] == state_fip) & (counties['COUNTYFP'] == county_fip)]
+    selected = selected.to_crs(epsg=3857)
+
+    # Plot with basemap
+    fig, ax = plt.subplots(figsize=(10, 10))
+    selected.plot(ax=ax, edgecolor='red', facecolor='none', linewidth=2)
+    ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.Mapnik, zoom=10)
+    ax.set_title(f"Map for {county_name}")
+    plt.axis('off')
+    #plt.show()
+    return fig
+
+def tract_map(year, state_fip, lng, lat, tract_name):
     # Download and unzip
     tract_url = f"https://www2.census.gov/geo/tiger/TIGER{year}/TRACT/tl_{year}_{state_fip}_tract.zip"
     r = requests.get(tract_url, headers={"User-Agent": "Mozilla/5.0"})
@@ -59,10 +80,30 @@ def county_map(year, state_fip, lng, lat, tract_name):
     ax.set_title(f"Map of Census Tract {tract_name}")
     plt.axis('off')
     #plt.show()
-    # do something here to return the artifact
+    return fig
 
-def mmsa_map():
-    pass
+def mmsa_map(year, cbsa_name):
+    url = f"https://www2.census.gov/geo/tiger/TIGER{year}/CBSA/tl_{year}_us_cbsa.zip"
+    r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
+
+    # Unzip and load
+    with zipfile.ZipFile(BytesIO(r.content)) as z:
+        z.extractall(f"tl_{year}_us_cbsa")
+
+    # Load with GeoPandas
+    cbsa = gpd.read_file(f"tl_{year}_us_cbsa/tl_{year}_us_cbsa.shp")
+
+    this_cbsa = cbsa[cbsa['NAME'].str.contains(cbsa_name, case=False)]
+
+    this_cbsa = this_cbsa.to_crs(epsg=3857)
+
+    fig, ax = plt.subplots(figsize=(10, 10))
+    this_cbsa.plot(ax=ax, facecolor='none', edgecolor='blue', linewidth=2)
+    ctx.add_basemap(ax)
+    ax.set_title(f"(CBSA) {cbsa_name}")
+    plt.axis('off')
+    #plt.show()
+    return fig
 
 def dp05_pdf():
     pass
@@ -205,6 +246,20 @@ if st.button("Submit"):
         #     data=csv,
         #     file_name=f"{f}_results.csv",
         #     mime="text/csv"
+        # )
+        # st.pyplot(fig)
+
+        # # Save the plot to a buffer
+        # buf = io.BytesIO()
+        # fig.savefig(buf, format="png")
+        # buf.seek(0)
+
+        # # Provide download button
+        # st.download_button(
+        #     label="📥 Download Plot as PNG",
+        #     data=buf,
+        #     file_name="plot.png",
+        #     mime="image/png"
         # )
     else:
         st.error("Please enter an address")
