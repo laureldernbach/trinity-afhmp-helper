@@ -224,7 +224,7 @@ if st.button("Submit"):
             print("ERROR: No Metropolitan/Micropolitan Statistical Area found for", ADDRESS)
         
         data, formatted_tract = census_summary(YEAR, STATE_CODE, COUNTY_CODE, TRACT_CODE, MMSA, st.secrets["CENSUS_TOKEN"])
-        st.session.state.data = data
+        st.session_state.data = data
         
         # Display results
         st.subheader(f"Demographic Summary for {ADDRESS}")
