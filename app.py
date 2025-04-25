@@ -208,39 +208,38 @@ if st.button("Submit"):
 
         YEAR = '2023'
         CENSUS = location["results"][0]['fields']['census'][YEAR]
-        ADDRESS = location["results"][0]['formatted_address']
+        st.session_state.ADDRESS = location["results"][0]['formatted_address']
         TRACT_CODE = CENSUS['tract_code']
         # TRACT_LABEL = 1
         STATE_CODE = CENSUS['state_fips']
         COUNTY_CODE = CENSUS['county_fips'][2:]
-        COUNTY_LABEL = location["results"][0]['address_components']['county']
+        st.session_state.COUNTY_LABEL = location["results"][0]['address_components']['county']
         LAT = location["results"][0]['location']['lat']
         LNG = location["results"][0]['location']['lng']
         try:
-            MMSA = CENSUS['metro_micro_statistical_area']['area_code']
-            MMSA_LABEL = CENSUS['metro_micro_statistical_area']['name']
+            st.session_state.MMSA = CENSUS['metro_micro_statistical_area']['area_code']
+            st.session_state.MMSA_LABEL = CENSUS['metro_micro_statistical_area']['name']
         except:
-            MMSA = None
+            st.session_state.MMSA = None
             print("ERROR: No Metropolitan/Micropolitan Statistical Area found for", ADDRESS)
         
-        data, formatted_tract = census_summary(YEAR, STATE_CODE, COUNTY_CODE, TRACT_CODE, MMSA, st.secrets["CENSUS_TOKEN"])
-        st.session_state.data = data
+        st.session_state.data, st.session_state.formatted_tract = census_summary(YEAR, STATE_CODE, COUNTY_CODE, TRACT_CODE, MMSA, st.secrets["CENSUS_TOKEN"])
         
         # Display results
-        st.subheader(f"Demographic Summary for {ADDRESS}")
-        st.write(f"Census Tract: {formatted_tract}")
-        st.write(f"County (Housing Market Area): {COUNTY_LABEL}")
-        if MMSA is None:
+        st.subheader(f"Demographic Summary for {st.session_state.ADDRESS}")
+        st.write(f"Census Tract: {st.session_state.formatted_tract}")
+        st.write(f"County (Housing Market Area): {st.session_state.COUNTY_LABEL}")
+        if st.session_state.MMSA is None:
             st.write("No Metro/Micropolitan Statistical Area to calculate Expanded Housing Market Area")
         else:
-            st.write(f"Metro/Micropolitan Statistical Area (Expanded Housing Market Area): {MMSA_LABEL}")
+            st.write(f"Metro/Micropolitan Statistical Area (Expanded Housing Market Area): {st.session_state.MMSA_LABEL}")
 
         # Show data table
         st.subheader("Data Table")
-        st.dataframe(data)
+        st.dataframe(st.session_state.data)
         st.write("Maps will appear below. They may take a moment to load.")
 
-        st.session_state.fig1 = tract_map(YEAR,STATE_CODE, LNG, LAT, formatted_tract)
+        st.session_state.fig1 = tract_map(YEAR,STATE_CODE, LNG, LAT, st.session_state.formatted_tract)
         st.pyplot(st.session_state.fig1)
 
         # Save the plot to a buffer
@@ -252,7 +251,7 @@ if st.button("Submit"):
         st.download_button(
             label="Download Map as PNG",
             data=buf1,
-            file_name=f"{formatted_tract.strip(' ')}.png",
+            file_name=f"{st.session_state.formatted_tract.strip(' ')}.png",
             mime="image/png"
         )
         
@@ -283,3 +282,13 @@ if st.button("Submit"):
         # )
     else:
         st.error("Please enter an address")
+
+# Make sure the data and plots are still rendered if the page is refreshed or interaction occurs
+if "data" in st.session_state and "fig1" in st.session_state:
+    # Display the stored data table
+    st.subheader("Data Table")
+    st.dataframe(st.session_state.data)
+
+    # Display the stored map plot
+    st.write("Maps will appear below.")
+    st.pyplot(st.session_state.fig1)
