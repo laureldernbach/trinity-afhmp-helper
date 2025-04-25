@@ -221,9 +221,9 @@ if st.button("Submit"):
             st.session_state.MMSA_LABEL = CENSUS['metro_micro_statistical_area']['name']
         except:
             st.session_state.MMSA = None
-            print("ERROR: No Metropolitan/Micropolitan Statistical Area found for", ADDRESS)
+            print("ERROR: No Metropolitan/Micropolitan Statistical Area found for", st.session_state.ADDRESS)
         
-        st.session_state.data, st.session_state.formatted_tract = census_summary(YEAR, STATE_CODE, COUNTY_CODE, TRACT_CODE, MMSA, st.secrets["CENSUS_TOKEN"])
+        st.session_state.data, st.session_state.formatted_tract = census_summary(YEAR, STATE_CODE, COUNTY_CODE, TRACT_CODE, st.session_state.MMSA, st.secrets["CENSUS_TOKEN"])
         
         # Display results
         st.subheader(f"Demographic Summary for {st.session_state.ADDRESS}")
