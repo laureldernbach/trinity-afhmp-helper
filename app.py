@@ -12,22 +12,6 @@ import zipfile
 import geopandas as gpd
 import matplotlib.pyplot as plt
 
-def geocodio_helper(address):
-    client = GeocodioClient(st.secrets["GEOCODIO_TOKEN"])
-
-    location = client.geocode(address, fields=["census2023"])
-
-    census = location["results"][0]['fields']['census']['2023']
-    tract = census['tract_code']
-    state = census['state_fips']
-    county = census['county_fips'][2:]
-    try:
-        mmsa = census['metro_micro_statistical_area']['area_code']
-    except:
-        mmsa = None
-        print("ERROR: No Metropolitan/Micropolitan Statistical Area found for", location["results"][0]['formatted_address'])
-    return tract, county, state, mmsa, location["results"][0]['formatted_address']
-
 def county_map(year, county_name, state_fip, county_fip ):
     # Download and unzip
     tract_url = f"https://www2.census.gov/geo/tiger/TIGER{year}/COUNTY/tl_{year}_us_county.zip"
@@ -111,7 +95,7 @@ def dp05_pdf():
 def dp02_pdf():
     pass
 
-def census_summary(year, state, county, tract, api_key):
+def census_summary(year, state, county, tract, mmsa, api_key):
     # https://api.census.gov/data/2023/acs/acs5/profile/variables.html
 
     # White
@@ -152,7 +136,6 @@ def census_summary(year, state, county, tract, api_key):
     data=response.json()
     df_county = pd.DataFrame(data[1:], columns=data[0])
     print("County (Housing Market Area): ", df_county.loc[0, "NAME"])
-    formatted_county = df_county.loc[0, "NAME"]
     df_county.loc[0, "NAME"] = "Housing Market Area"
 
     # MMSA LEVEL
@@ -165,7 +148,7 @@ def census_summary(year, state, county, tract, api_key):
         df_mmsa = pd.DataFrame(data[1:], columns=data[0])
         # the census variable comes from geocodio... save for later
         # print(f"M{census['metro_micro_statistical_area']['type'][1:]} Statistical Area (Expanded Housing Market Area): ", df_mmsa.loc[0, "NAME"])
-        formatted_mmsa = df_mmsa.loc[0, "NAME"]
+        # formatted_mmsa = df_mmsa.loc[0, "NAME"]
         df_mmsa.loc[0, "NAME"] = "Expanded Housing Market Area"
 
         df = pd.concat([df_tract, df_county, df_mmsa])
@@ -239,11 +222,8 @@ if st.button("Submit"):
         except:
             MMSA = None
             print("ERROR: No Metropolitan/Micropolitan Statistical Area found for", ADDRESS)
-        #return tract, county, state, mmsa, location["results"][0]['formatted_address']
-
-        #tract, county, state, mmsa, formatted_address = geocodio_helper(search_term)
         
-        data, formatted_tract = census_summary(YEAR, STATE_CODE, COUNTY_CODE, TRACT_CODE, st.secrets["CENSUS_TOKEN"])
+        data, formatted_tract = census_summary(YEAR, STATE_CODE, COUNTY_CODE, TRACT_CODE, MMSA, st.secrets["CENSUS_TOKEN"])
         
         # Display results
         st.subheader(f"Demographic Summary for {ADDRESS}")
@@ -257,6 +237,9 @@ if st.button("Submit"):
         # Show data table
         st.subheader("Data Table")
         st.dataframe(data)
+
+        fig1 = tract_map(YEAR,STATE_CODE, LNG, LAT, formatted_tract)
+        st.pyplot(fig1)
         
         # # Download buttons
         # csv = data.to_csv(index=False).encode('utf-8')
