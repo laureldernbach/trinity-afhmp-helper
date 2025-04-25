@@ -10,3 +10,7 @@ shapely
 requests
 ioBytesIO
 zipfile
+pyproj
+fiona
+rtree
+pillow
