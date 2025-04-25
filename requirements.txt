@@ -6,11 +6,10 @@ pygeocodio
 matplotlib
 contextily
 requests
-ioBytesIO
 zipfile
 pillow
-geopandas==0.14.3
-fiona==1.9.5
-pyproj==3.6.1
-shapely==2.0.3
-rtree==1.2.0
+geopandas
+fiona
+pyproj
+shapely
+rtree
