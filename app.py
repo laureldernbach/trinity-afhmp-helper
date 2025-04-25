@@ -184,7 +184,7 @@ def census_summary(year, state, county, tract, api_key):
         df = df.transpose()
         df.columns = ["Census Tract", "Housing Market Area", "Expanded Housing Market Area"]
         df.drop(index="DEMOGRAPHIC", inplace=True)
-        return df, formatted_tract, formatted_county, formatted_mmsa
+        return df, formatted_tract
     else:
         print("No metropolitan statistical area/micropolitan statistical area to calculate Expanded Housing Market Area")
         df = pd.concat([df_tract, df_county])
@@ -203,7 +203,7 @@ def census_summary(year, state, county, tract, api_key):
         df = df.transpose()
         df.columns = ["Census Tract", "Housing Market Area"]
         df.drop(index="DEMOGRAPHIC", inplace=True)
-        return df, formatted_tract, formatted_county, None
+        return df, formatted_tract
 
 ##################################################
 
@@ -219,18 +219,40 @@ if st.button("Submit"):
     if search_term:
         st.write(f"Gathering demographic data...")
 
-        tract, county, state, mmsa, formatted_address = geocodio_helper(search_term)
+        client = GeocodioClient(st.secrets["GEOCODIO_TOKEN"])
+
+        location = client.geocode(search_term, fields=["census2023"])
+
+        YEAR = '2023'
+        CENSUS = location["results"][0]['fields']['census'][YEAR]
+        ADDRESS = location["results"][0]['formatted_address']
+        TRACT_CODE = CENSUS['tract_code']
+        # TRACT_LABEL = 1
+        STATE_CODE = CENSUS['state_fips']
+        COUNTY_CODE = CENSUS['county_fips'][2:]
+        COUNTY_LABEL = location["results"][0]['address_components']['county']
+        LAT = location["results"][0]['location']['lat']
+        LNG = location["results"][0]['location']['lng']
+        try:
+            MMSA = CENSUS['metro_micro_statistical_area']['area_code']
+            MMSA_LABEL = CENSUS['metro_micro_statistical_area']['name']
+        except:
+            MMSA = None
+            print("ERROR: No Metropolitan/Micropolitan Statistical Area found for", ADDRESS)
+        #return tract, county, state, mmsa, location["results"][0]['formatted_address']
+
+        #tract, county, state, mmsa, formatted_address = geocodio_helper(search_term)
         
-        data, formatted_tract, formatted_county, formatted_mmsa = census_summary("2023", state, county, tract, st.secrets["CENSUS_TOKEN"])
+        data, formatted_tract = census_summary(YEAR, STATE_CODE, COUNTY_CODE, TRACT_CODE, st.secrets["CENSUS_TOKEN"])
         
         # Display results
-        st.subheader(f"Demographic Summary for {formatted_address}")
+        st.subheader(f"Demographic Summary for {ADDRESS}")
         st.write(f"Census Tract: {formatted_tract}")
-        st.write(f"County (Housing Market Area): {formatted_county}")
-        if mmsa is None:
+        st.write(f"County (Housing Market Area): {COUNTY_LABEL}")
+        if MMSA is None:
             st.write("No Metro/Micropolitan Statistical Area to calculate Expanded Housing Market Area")
         else:
-            st.write(f"Metro/Micropolitan Statistical Area (Expanded Housing Market Area): {formatted_mmsa}")
+            st.write(f"Metro/Micropolitan Statistical Area (Expanded Housing Market Area): {MMSA_LABEL}")
 
         # Show data table
         st.subheader("Data Table")
