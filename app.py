@@ -224,6 +224,7 @@ if st.button("Submit"):
             print("ERROR: No Metropolitan/Micropolitan Statistical Area found for", ADDRESS)
         
         data, formatted_tract = census_summary(YEAR, STATE_CODE, COUNTY_CODE, TRACT_CODE, MMSA, st.secrets["CENSUS_TOKEN"])
+        st.session.state.data = data
         
         # Display results
         st.subheader(f"Demographic Summary for {ADDRESS}")
@@ -239,18 +240,18 @@ if st.button("Submit"):
         st.dataframe(data)
         st.write("Maps will appear below. They may take a moment to load.")
 
-        fig1 = tract_map(YEAR,STATE_CODE, LNG, LAT, formatted_tract)
-        st.pyplot(fig1)
+        st.session_state.fig1 = tract_map(YEAR,STATE_CODE, LNG, LAT, formatted_tract)
+        st.pyplot(st.session_state.fig1)
 
         # Save the plot to a buffer
-        buf = BytesIO()
-        fig1.savefig(buf, format="png")
-        buf.seek(0)
+        buf1 = BytesIO()
+        st.session_state.fig1.savefig(buf1, format="png")
+        buf1.seek(0)
 
         # Provide download button
         st.download_button(
             label="Download Map as PNG",
-            data=buf,
+            data=buf1,
             file_name=f"{formatted_tract.strip(' ')}.png",
             mime="image/png"
         )
