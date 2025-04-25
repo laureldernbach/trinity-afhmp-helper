@@ -3,3 +3,10 @@ pandas
 numpy
 requests
 pygeocodio
+geopandas
+matplotlib
+contextily
+shapely
+requests
+ioBytesIO
+zipfile

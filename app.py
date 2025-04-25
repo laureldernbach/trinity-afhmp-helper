@@ -3,6 +3,15 @@ import pandas as pd
 import numpy as np
 import requests
 from geocodio import GeocodioClient
+import geopandas as gpd
+import matplotlib.pyplot as plt
+import contextily as ctx
+from shapely.geometry import Point
+import requests
+from io import BytesIO
+import zipfile
+import geopandas as gpd
+import matplotlib.pyplot as plt
 
 def geocodio_helper(address):
     client = GeocodioClient(st.secrets["GEOCODIO_TOKEN"])
@@ -19,8 +28,50 @@ def geocodio_helper(address):
         mmsa = None
         print("ERROR: No Metropolitan/Micropolitan Statistical Area found for", location["results"][0]['formatted_address'])
     return tract, county, state, mmsa, location["results"][0]['formatted_address']
+def tract_map():
+    pass
 
-def census(year, state, county, tract, api_key):
+def county_map(year, state_fip, lng, lat, tract_name):
+    # Download and unzip
+    tract_url = f"https://www2.census.gov/geo/tiger/TIGER{year}/TRACT/tl_{year}_{state_fip}_tract.zip"
+    r = requests.get(tract_url, headers={"User-Agent": "Mozilla/5.0"})
+
+    with zipfile.ZipFile(BytesIO(r.content)) as z:
+        z.extractall(f"tl_{year}_{state_fip}_tract")
+
+    # Load census tracts for NY state
+    tracts = gpd.read_file(f"tl_{year}_{state_fip}_tract/tl_{year}_{state_fip}_tract.shp")
+
+    # Ensure CRS is geographic (lat/lon)
+    tracts = tracts.to_crs(epsg=4326)
+    # Create a point for
+    point = Point(float(lng), float(lat))
+    print(point)
+
+    # Find the tract containing the point
+    selected_tract = tracts[tracts.geometry.contains(point)]
+    # Reproject to Web Mercator
+    selected_tract = selected_tract.to_crs(epsg=3857)
+
+    # Plot with basemap
+    fig, ax = plt.subplots(figsize=(10, 10))
+    selected_tract.plot(ax=ax, edgecolor='red', facecolor='none', linewidth=2)
+    ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.Mapnik)
+    ax.set_title(f"Map of Census Tract {tract_name}")
+    plt.axis('off')
+    #plt.show()
+    # do something here to return the artifact
+
+def mmsa_map():
+    pass
+
+def dp05_pdf():
+    pass
+
+def dp02_pdf():
+    pass
+
+def census_summary(year, state, county, tract, api_key):
     # https://api.census.gov/data/2023/acs/acs5/profile/variables.html
 
     # White
@@ -130,12 +181,7 @@ if st.button("Submit"):
 
         tract, county, state, mmsa, formatted_address = geocodio_helper(search_term)
         
-        # Simulate data processing (replace with your actual code)
-        # data = pd.DataFrame({
-        #     'Category': ['A', 'B', 'C'],
-        #     'Value': np.random.randn(3)
-        # })
-        data, formatted_tract, formatted_county, formatted_mmsa = census("2023", state, county, tract, st.secrets["CENSUS_TOKEN"])
+        data, formatted_tract, formatted_county, formatted_mmsa = census_summary("2023", state, county, tract, st.secrets["CENSUS_TOKEN"])
         
         # Display results
         st.subheader(f"Demographic Summary for {formatted_address}")
