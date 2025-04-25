@@ -1,12 +1,10 @@
 streamlit
 pandas
-numpy
 requests
 pygeocodio
 matplotlib
 contextily
 requests
-zipfile
 pillow
 geopandas
 fiona
