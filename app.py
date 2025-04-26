@@ -257,7 +257,7 @@ if st.button("Submit"):
         location = client.geocode(search_term, fields=["census2023"])
 
         st.session_state.YEAR = '2023'
-        CENSUS = location["results"][0]['fields']['census'][YEAR]
+        CENSUS = location["results"][0]['fields']['census'][st.session_state.YEAR]
         st.session_state.ADDRESS = location["results"][0]['formatted_address']
         st.session_state.TRACT_CODE = CENSUS['tract_code']
         st.session_state.STATE_CODE = CENSUS['state_fips']
