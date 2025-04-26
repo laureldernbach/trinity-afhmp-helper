@@ -11,11 +11,13 @@ from io import BytesIO
 import zipfile
 import geopandas as gpd
 import matplotlib.pyplot as plt
+import certifi
+import os
 
 def county_map(year, county_name, state_fip, county_fip ):
     # Download and unzip
     tract_url = f"https://www2.census.gov/geo/tiger/TIGER{year}/COUNTY/tl_{year}_us_county.zip"
-    r = requests.get(tract_url, headers={"User-Agent": "Mozilla/5.0"}, verify=False)
+    r = requests.get(tract_url, headers={"User-Agent": "Mozilla/5.0"})
 
     with zipfile.ZipFile(BytesIO(r.content)) as z:
         z.extractall(f"tl_{year}_us_county")
@@ -38,7 +40,7 @@ def county_map(year, county_name, state_fip, county_fip ):
 def tract_map(year, state_fip, lng, lat, tract_name):
     # Download and unzip
     tract_url = f"https://www2.census.gov/geo/tiger/TIGER{year}/TRACT/tl_{year}_{state_fip}_tract.zip"
-    r = requests.get(tract_url, headers={"User-Agent": "Mozilla/5.0"}, verify=False)
+    r = requests.get(tract_url, headers={"User-Agent": "Mozilla/5.0"})
 
     with zipfile.ZipFile(BytesIO(r.content)) as z:
         z.extractall(f"tl_{year}_{state_fip}_tract")
@@ -68,7 +70,7 @@ def tract_map(year, state_fip, lng, lat, tract_name):
 
 def mmsa_map(year, cbsa_name):
     url = f"https://www2.census.gov/geo/tiger/TIGER{year}/CBSA/tl_{year}_us_cbsa.zip"
-    r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, verify=False)
+    r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
 
     # Unzip and load
     with zipfile.ZipFile(BytesIO(r.content)) as z:
@@ -187,13 +189,38 @@ def census_summary(year, state, county, tract, mmsa, api_key):
         df.columns = ["Census Tract", "Housing Market Area"]
         df.drop(index="DEMOGRAPHIC", inplace=True)
         return df, formatted_tract
+    
+def to_filename(s):
+    return ''.join(c for c in s if c.isalnum())
+
+def display_map(fig, fig_name):
+    st.pyplot(fig)
+
+    # Save the plot to a buffer
+    buf = BytesIO()
+    fig.savefig(buf, format="png")
+    buf.seek(0)
+
+    # Provide download button
+    st.download_button(
+        label="Download Map as PNG",
+        data=buf,
+        file_name=f"{to_filename(fig_name)}.png",
+        mime="image/png"
+    )
 
 ##################################################
+
+os.environ['SSL_CERT_FILE'] = certifi.where()
 
 if "data" not in st.session_state:
     st.session_state.data = None
 if "fig1" not in st.session_state:
     st.session_state.fig1 = None
+if "fig2" not in st.session_state:
+    st.session_state.fig2 = None
+if "fig3" not in st.session_state:
+    st.session_state.fig3 = None
 if "search_term" not in st.session_state:
     st.session_state.search_term = ""
 
@@ -217,7 +244,6 @@ if st.button("Submit"):
         CENSUS = location["results"][0]['fields']['census'][YEAR]
         st.session_state.ADDRESS = location["results"][0]['formatted_address']
         TRACT_CODE = CENSUS['tract_code']
-        # TRACT_LABEL = 1
         STATE_CODE = CENSUS['state_fips']
         COUNTY_CODE = CENSUS['county_fips'][2:]
         st.session_state.COUNTY_LABEL = location["results"][0]['address_components']['county']
@@ -231,70 +257,23 @@ if st.button("Submit"):
             print("ERROR: No Metropolitan/Micropolitan Statistical Area found for", st.session_state.ADDRESS)
         
         st.session_state.data, st.session_state.formatted_tract = census_summary(YEAR, STATE_CODE, COUNTY_CODE, TRACT_CODE, st.session_state.MMSA, st.secrets["CENSUS_TOKEN"])
-        
-        # # Display results
-        # st.subheader(f"Demographic Summary for {st.session_state.ADDRESS}")
-        # st.write(f"Census Tract: {st.session_state.formatted_tract}")
-        # st.write(f"County (Housing Market Area): {st.session_state.COUNTY_LABEL}")
-        # if st.session_state.MMSA is None:
-        #     st.write("No Metro/Micropolitan Statistical Area to calculate Expanded Housing Market Area")
-        # else:
-        #     st.write(f"Metro/Micropolitan Statistical Area (Expanded Housing Market Area): {st.session_state.MMSA_LABEL}")
-
-        # Show data table
-        # st.subheader("Data Table")
-        # st.dataframe(st.session_state.data)
-        # st.write("Maps will appear below. They may take a moment to load.")
 
         st.session_state.fig1 = tract_map(YEAR,STATE_CODE, LNG, LAT, st.session_state.formatted_tract)
-        #st.pyplot(st.session_state.fig1)
-
-        # # Save the plot to a buffer
-        # buf1 = BytesIO()
-        # st.session_state.fig1.savefig(buf1, format="png")
-        # buf1.seek(0)
-
-        # # Provide download button
-        # st.download_button(
-        #     label="Download Map as PNG",
-        #     data=buf1,
-        #     file_name=f"{st.session_state.formatted_tract.strip(' ')}.png",
-        #     mime="image/png"
-        # )
         
-        # # Download buttons
-        # csv = data.to_csv(index=False).encode('utf-8')
-        
-        # # maybe use the full fip here for download
-        # f = formatted_address.strip(" ")
-        # st.download_button(
-        #     "Download Detailed CSV",
-        #     data=csv,
-        #     file_name=f"{f}_results.csv",
-        #     mime="text/csv"
-        # )
-        # st.pyplot(fig)
+        st.session_state.fig2 = county_map(YEAR, st.session_state.COUNTY_LABEL, STATE_CODE, COUNTY_CODE)
 
-        # # Save the plot to a buffer
-        # buf = io.BytesIO()
-        # fig.savefig(buf, format="png")
-        # buf.seek(0)
+        if st.session_state.MMSA is not None:
+            st.session_state.fig3 = mmsa_map(YEAR, st.session_state.MMSA_LABEL)
 
-        # # Provide download button
-        # st.download_button(
-        #     label="📥 Download Plot as PNG",
-        #     data=buf,
-        #     file_name="plot.png",
-        #     mime="image/png"
-        # )
     else:
         st.error("Please enter an address")
 
 # Make sure the data and plots are still rendered if the page is refreshed or interaction occurs
-if st.session_state.data is not None and st.session_state.fig1 is not None:
+if st.session_state.data is not None and st.session_state.fig1 is not None \
+    and st.session_state.fig2 is not None:
     # Display results
     st.subheader(f"Demographic Summary for {st.session_state.ADDRESS}")
-    st.write(f"Census Tract: {st.session_state.formatted_tract}")
+    st.write(f"Census Tract: {st.session_state.formatted_tract.split(";")[0]}")
     st.write(f"County (Housing Market Area): {st.session_state.COUNTY_LABEL}")
     if st.session_state.MMSA is None:
         st.write("No Metro/Micropolitan Statistical Area to calculate Expanded Housing Market Area")
@@ -305,19 +284,9 @@ if st.session_state.data is not None and st.session_state.fig1 is not None:
     st.subheader("Data Table")
     st.dataframe(st.session_state.data)
 
-    # Display the stored map plot
-    #st.write("Maps will appear below.")
-    st.pyplot(st.session_state.fig1)
+    display_map(st.session_state.fig1, st.session_state.formatted_tract)
 
-    # Save the plot to a buffer
-    buf1 = BytesIO()
-    st.session_state.fig1.savefig(buf1, format="png")
-    buf1.seek(0)
+    display_map(st.session_state.fig2, st.session_state.COUNTY_LABEL)
 
-    # Provide download button
-    st.download_button(
-        label="Download Map as PNG",
-        data=buf1,
-        file_name=f"{st.session_state.formatted_tract.strip(' ')}.png",
-        mime="image/png"
-    )
+    if st.session_state.MMSA is not None:
+        display_map(st.session_state.fig3, st.session_state.MMSA_LABEL)
