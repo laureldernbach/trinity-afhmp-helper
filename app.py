@@ -11,8 +11,6 @@ from io import BytesIO
 import zipfile
 import geopandas as gpd
 import matplotlib.pyplot as plt
-import certifi
-import os
 
 def county_map(year, county_name, state_fip, county_fip ):
     # Download and unzip
@@ -203,11 +201,31 @@ def display_map(fig, fig_name):
 
     # Provide download button
     st.download_button(
-        label="Download Map as PNG",
+        label=f"Download {to_filename(fig_name)}.png",
         data=buf,
         file_name=f"{to_filename(fig_name)}.png",
         mime="image/png"
     )
+
+def build_census_url(year, table_id, state_fips, county_fips, tract_code, cbsa_code):
+    dataset_code = f"ACSDP5Y{year}"  # Example: ACSDP5Y2023
+    base_url = f"https://data.census.gov/table/{dataset_code}.{table_id}"
+
+    # Build geo codes
+    county_geo = f"050XX00US{state_fips}{county_fips}"
+    tract_geo = f"1400000US{state_fips}{county_fips}{tract_code}"
+    cbsa_geo = f"310XX00US{cbsa_code}"
+
+    if cbsa_code is None:
+        # ex. https://data.census.gov/table/ACSDP1Y2023.DP05?q=dp05&g=050XX00US47037_1400000US47037016100
+        geo_param = f"{county_geo}_{tract_geo}"
+        return
+    else:
+        # ex. https://data.census.gov/table/ACSDP5Y2023.DP05?q=dp05&g=050XX00US47037_1400000US47037016100_310XX00US349801
+        cbsa_geo = f"310XX00US{cbsa_code}"
+        geo_param = f"{county_geo}_{tract_geo}_{cbsa_geo}"
+
+    return f"{base_url}?q={table_id}&g={geo_param}"
 
 ##################################################
 
@@ -232,18 +250,18 @@ search_term = st.text_input("Address:")
 # Process when user clicks button
 if st.button("Submit"):
     if search_term:
-        st.write(f"Gathering demographic data...")
+        st.write(f"Gathering demographic data... This may take a few seconds.")
 
         client = GeocodioClient(st.secrets["GEOCODIO_TOKEN"])
 
         location = client.geocode(search_term, fields=["census2023"])
 
-        YEAR = '2023'
+        st.session_state.YEAR = '2023'
         CENSUS = location["results"][0]['fields']['census'][YEAR]
         st.session_state.ADDRESS = location["results"][0]['formatted_address']
-        TRACT_CODE = CENSUS['tract_code']
-        STATE_CODE = CENSUS['state_fips']
-        COUNTY_CODE = CENSUS['county_fips'][2:]
+        st.session_state.TRACT_CODE = CENSUS['tract_code']
+        st.session_state.STATE_CODE = CENSUS['state_fips']
+        st.session_state.COUNTY_CODE = CENSUS['county_fips'][2:]
         st.session_state.COUNTY_LABEL = location["results"][0]['address_components']['county']
         LAT = location["results"][0]['location']['lat']
         LNG = location["results"][0]['location']['lng']
@@ -254,14 +272,14 @@ if st.button("Submit"):
             st.session_state.MMSA = None
             print("ERROR: No Metropolitan/Micropolitan Statistical Area found for", st.session_state.ADDRESS)
         
-        st.session_state.data, st.session_state.formatted_tract = census_summary(YEAR, STATE_CODE, COUNTY_CODE, TRACT_CODE, st.session_state.MMSA, st.secrets["CENSUS_TOKEN"])
+        st.session_state.data, st.session_state.formatted_tract = census_summary(st.session_state.YEAR, st.session_state.STATE_CODE, st.session_state.COUNTY_CODE, st.session_state.TRACT_CODE, st.session_state.MMSA, st.secrets["CENSUS_TOKEN"])
 
-        st.session_state.fig1 = tract_map(YEAR,STATE_CODE, LNG, LAT, st.session_state.formatted_tract)
+        st.session_state.fig1 = tract_map(st.session_state.YEAR,st.session_state.STATE_CODE, LNG, LAT, st.session_state.formatted_tract)
         
-        st.session_state.fig2 = county_map(YEAR, st.session_state.COUNTY_LABEL, STATE_CODE, COUNTY_CODE)
+        st.session_state.fig2 = county_map(st.session_state.YEAR, st.session_state.COUNTY_LABEL, st.session_state.STATE_CODE, st.session_state.COUNTY_CODE)
 
         if st.session_state.MMSA is not None:
-            st.session_state.fig3 = mmsa_map(YEAR, st.session_state.MMSA_LABEL)
+            st.session_state.fig3 = mmsa_map(st.session_state.YEAR, st.session_state.MMSA_LABEL)
 
     else:
         st.error("Please enter an address")
@@ -282,6 +300,11 @@ if st.session_state.data is not None and st.session_state.fig1 is not None \
     st.subheader("Data Table")
     st.dataframe(st.session_state.data)
 
+    st.write("Download the entire ACS 2023 5-year DP05 Survey on data.census.gov:")
+    st.write(build_census_url("2023", "DP05", st.session_state.STATE_CODE, st.session_state.COUNTY_CODE, st.session_state.TRACT_CODE, st.session_state.MMSA_CODE))
+    st.write("Download the entire ACS 2023 5-year DP02 Survey on data.census.gov:")
+    st.write(build_census_url("2023", "DP02", st.session_state.STATE_CODE, st.session_state.COUNTY_CODE, st.session_state.TRACT_CODE, st.session_state.MMSA_CODE))
+    
     display_map(st.session_state.fig1, st.session_state.formatted_tract)
 
     display_map(st.session_state.fig2, st.session_state.COUNTY_LABEL)

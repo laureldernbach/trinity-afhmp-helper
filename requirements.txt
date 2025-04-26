@@ -11,4 +11,3 @@ fiona
 pyproj
 shapely
 rtree
-certifi
