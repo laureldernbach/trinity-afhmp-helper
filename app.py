@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 def county_map(year, county_name, state_fip, county_fip ):
     # Download and unzip
     tract_url = f"https://www2.census.gov/geo/tiger/TIGER{year}/COUNTY/tl_{year}_us_county.zip"
-    r = requests.get(tract_url, headers={"User-Agent": "Mozilla/5.0"})
+    r = requests.get(tract_url, headers={"User-Agent": "Mozilla/5.0"}, verify=False)
 
     with zipfile.ZipFile(BytesIO(r.content)) as z:
         z.extractall(f"tl_{year}_us_county")
@@ -38,7 +38,7 @@ def county_map(year, county_name, state_fip, county_fip ):
 def tract_map(year, state_fip, lng, lat, tract_name):
     # Download and unzip
     tract_url = f"https://www2.census.gov/geo/tiger/TIGER{year}/TRACT/tl_{year}_{state_fip}_tract.zip"
-    r = requests.get(tract_url, headers={"User-Agent": "Mozilla/5.0"})
+    r = requests.get(tract_url, headers={"User-Agent": "Mozilla/5.0"}, verify=False)
 
     with zipfile.ZipFile(BytesIO(r.content)) as z:
         z.extractall(f"tl_{year}_{state_fip}_tract")
@@ -68,7 +68,7 @@ def tract_map(year, state_fip, lng, lat, tract_name):
 
 def mmsa_map(year, cbsa_name):
     url = f"https://www2.census.gov/geo/tiger/TIGER{year}/CBSA/tl_{year}_us_cbsa.zip"
-    r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
+    r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, verify=False)
 
     # Unzip and load
     with zipfile.ZipFile(BytesIO(r.content)) as z:
