@@ -190,6 +190,13 @@ def census_summary(year, state, county, tract, mmsa, api_key):
 
 ##################################################
 
+if "data" not in st.session_state:
+    st.session_state.data = None
+if "fig1" not in st.session_state:
+    st.session_state.fig1 = None
+if "search_term" not in st.session_state:
+    st.session_state.search_term = ""
+
 # App title and description
 st.title("Affirmative Fair Housing Marketing Plan (AFHMP) Form Helper")
 st.write("Enter a full US address to gather demographic data. No specific formatting necessary.")
@@ -284,7 +291,7 @@ if st.button("Submit"):
         st.error("Please enter an address")
 
 # Make sure the data and plots are still rendered if the page is refreshed or interaction occurs
-if "data" in st.session_state and "fig1" in st.session_state:
+if st.session_state.data is not None and st.session_state.fig1 is not None:
     # Display the stored data table
     st.subheader("Data Table")
     st.dataframe(st.session_state.data)
