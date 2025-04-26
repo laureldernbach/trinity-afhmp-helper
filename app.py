@@ -30,7 +30,7 @@ def county_map(year, county_name, state_fip, county_fip ):
     fig, ax = plt.subplots(figsize=(10, 10))
     selected.plot(ax=ax, edgecolor='red', facecolor='none', linewidth=2)
     ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.Mapnik, zoom=10)
-    ax.set_title(f"WORKSHEET 1: Expanded Housing Market Area ({county_name})")
+    ax.set_title(f"WORKSHEET 1: Housing Market Area ({county_name})")
     plt.axis('off')
     #plt.show()
     return fig
@@ -307,7 +307,7 @@ if st.session_state.data is not None and st.session_state.fig1 is not None \
     st.markdown(f"Download the complete [ACS 2023 5-year DP05 Survey]({dp05}) and [ACS 2023 5-year DP02 Survey]({dp02}) on data.census.gov by clicking the `Excel` button in the toolbar.")
  
     st.subheader("Maps")
-    
+
     display_map(st.session_state.fig1, st.session_state.formatted_tract)
 
     display_map(st.session_state.fig2, st.session_state.COUNTY_LABEL)
