@@ -300,11 +300,12 @@ if st.session_state.data is not None and st.session_state.fig1 is not None \
     st.subheader("Data Table")
     st.dataframe(st.session_state.data)
 
-    st.write("Download the entire ACS 2023 5-year DP05 Survey on data.census.gov:")
-    st.write(build_census_url("2023", "DP05", st.session_state.STATE_CODE, st.session_state.COUNTY_CODE, st.session_state.TRACT_CODE, st.session_state.MMSA_CODE))
-    st.write("Download the entire ACS 2023 5-year DP02 Survey on data.census.gov:")
-    st.write(build_census_url("2023", "DP02", st.session_state.STATE_CODE, st.session_state.COUNTY_CODE, st.session_state.TRACT_CODE, st.session_state.MMSA_CODE))
+    dp05 = build_census_url("2023", "DP05", st.session_state.STATE_CODE, st.session_state.COUNTY_CODE, st.session_state.TRACT_CODE, st.session_state.MMSA_CODE)
+    dp02 = build_census_url("2023", "DP02", st.session_state.STATE_CODE, st.session_state.COUNTY_CODE, st.session_state.TRACT_CODE, st.session_state.MMSA_CODE)
     
+    st.markdown(f"Download the entire [ACS 2023 5-year DP05 Survey]({dp05}) on data.census.gov by clicking the `Excel` button in the toolbar.")
+    st.markdown(f"Download the entire [ACS 2023 5-year DP02 Survey]({dp02}) on data.census.gov by clicking the `Excel` button in the toolbar.")
+
     display_map(st.session_state.fig1, st.session_state.formatted_tract)
 
     display_map(st.session_state.fig2, st.session_state.COUNTY_LABEL)
