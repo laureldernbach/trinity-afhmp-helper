@@ -232,35 +232,35 @@ if st.button("Submit"):
         
         st.session_state.data, st.session_state.formatted_tract = census_summary(YEAR, STATE_CODE, COUNTY_CODE, TRACT_CODE, st.session_state.MMSA, st.secrets["CENSUS_TOKEN"])
         
-        # Display results
-        st.subheader(f"Demographic Summary for {st.session_state.ADDRESS}")
-        st.write(f"Census Tract: {st.session_state.formatted_tract}")
-        st.write(f"County (Housing Market Area): {st.session_state.COUNTY_LABEL}")
-        if st.session_state.MMSA is None:
-            st.write("No Metro/Micropolitan Statistical Area to calculate Expanded Housing Market Area")
-        else:
-            st.write(f"Metro/Micropolitan Statistical Area (Expanded Housing Market Area): {st.session_state.MMSA_LABEL}")
+        # # Display results
+        # st.subheader(f"Demographic Summary for {st.session_state.ADDRESS}")
+        # st.write(f"Census Tract: {st.session_state.formatted_tract}")
+        # st.write(f"County (Housing Market Area): {st.session_state.COUNTY_LABEL}")
+        # if st.session_state.MMSA is None:
+        #     st.write("No Metro/Micropolitan Statistical Area to calculate Expanded Housing Market Area")
+        # else:
+        #     st.write(f"Metro/Micropolitan Statistical Area (Expanded Housing Market Area): {st.session_state.MMSA_LABEL}")
 
         # Show data table
-        st.subheader("Data Table")
-        st.dataframe(st.session_state.data)
-        st.write("Maps will appear below. They may take a moment to load.")
+        # st.subheader("Data Table")
+        # st.dataframe(st.session_state.data)
+        # st.write("Maps will appear below. They may take a moment to load.")
 
         st.session_state.fig1 = tract_map(YEAR,STATE_CODE, LNG, LAT, st.session_state.formatted_tract)
-        st.pyplot(st.session_state.fig1)
+        #st.pyplot(st.session_state.fig1)
 
-        # Save the plot to a buffer
-        buf1 = BytesIO()
-        st.session_state.fig1.savefig(buf1, format="png")
-        buf1.seek(0)
+        # # Save the plot to a buffer
+        # buf1 = BytesIO()
+        # st.session_state.fig1.savefig(buf1, format="png")
+        # buf1.seek(0)
 
-        # Provide download button
-        st.download_button(
-            label="Download Map as PNG",
-            data=buf1,
-            file_name=f"{st.session_state.formatted_tract.strip(' ')}.png",
-            mime="image/png"
-        )
+        # # Provide download button
+        # st.download_button(
+        #     label="Download Map as PNG",
+        #     data=buf1,
+        #     file_name=f"{st.session_state.formatted_tract.strip(' ')}.png",
+        #     mime="image/png"
+        # )
         
         # # Download buttons
         # csv = data.to_csv(index=False).encode('utf-8')
@@ -292,10 +292,32 @@ if st.button("Submit"):
 
 # Make sure the data and plots are still rendered if the page is refreshed or interaction occurs
 if st.session_state.data is not None and st.session_state.fig1 is not None:
+    # Display results
+    st.subheader(f"Demographic Summary for {st.session_state.ADDRESS}")
+    st.write(f"Census Tract: {st.session_state.formatted_tract}")
+    st.write(f"County (Housing Market Area): {st.session_state.COUNTY_LABEL}")
+    if st.session_state.MMSA is None:
+        st.write("No Metro/Micropolitan Statistical Area to calculate Expanded Housing Market Area")
+    else:
+        st.write(f"Metro/Micropolitan Statistical Area (Expanded Housing Market Area): {st.session_state.MMSA_LABEL}")
+
     # Display the stored data table
     st.subheader("Data Table")
     st.dataframe(st.session_state.data)
 
     # Display the stored map plot
-    st.write("Maps will appear below.")
+    #st.write("Maps will appear below.")
     st.pyplot(st.session_state.fig1)
+
+    # Save the plot to a buffer
+    buf1 = BytesIO()
+    st.session_state.fig1.savefig(buf1, format="png")
+    buf1.seek(0)
+
+    # Provide download button
+    st.download_button(
+        label="Download Map as PNG",
+        data=buf1,
+        file_name=f"{st.session_state.formatted_tract.strip(' ')}.png",
+        mime="image/png"
+    )
