@@ -306,6 +306,8 @@ if st.session_state.data is not None and st.session_state.fig1 is not None \
     st.write("The summary above included data point from both ACS 2023 5-year DP05 and DP02 surveys.")
     st.markdown(f"Download the complete [ACS 2023 5-year DP05 Survey]({dp05}) and [ACS 2023 5-year DP02 Survey]({dp02}) on data.census.gov by clicking the `Excel` button in the toolbar.")
  
+    st.subheader("Maps")
+    
     display_map(st.session_state.fig1, st.session_state.formatted_tract)
 
     display_map(st.session_state.fig2, st.session_state.COUNTY_LABEL)
