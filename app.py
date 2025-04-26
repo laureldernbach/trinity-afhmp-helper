@@ -266,19 +266,19 @@ if st.button("Submit"):
         LAT = location["results"][0]['location']['lat']
         LNG = location["results"][0]['location']['lng']
         try:
-            st.session_state.MMSA = CENSUS['metro_micro_statistical_area']['area_code']
+            st.session_state.MMSA_CODE = CENSUS['metro_micro_statistical_area']['area_code']
             st.session_state.MMSA_LABEL = CENSUS['metro_micro_statistical_area']['name']
         except:
-            st.session_state.MMSA = None
+            st.session_state.MMSA_CODE = None
             print("ERROR: No Metropolitan/Micropolitan Statistical Area found for", st.session_state.ADDRESS)
         
-        st.session_state.data, st.session_state.formatted_tract = census_summary(st.session_state.YEAR, st.session_state.STATE_CODE, st.session_state.COUNTY_CODE, st.session_state.TRACT_CODE, st.session_state.MMSA, st.secrets["CENSUS_TOKEN"])
+        st.session_state.data, st.session_state.formatted_tract = census_summary(st.session_state.YEAR, st.session_state.STATE_CODE, st.session_state.COUNTY_CODE, st.session_state.TRACT_CODE, st.session_state.MMSA_CODE, st.secrets["CENSUS_TOKEN"])
 
         st.session_state.fig1 = tract_map(st.session_state.YEAR,st.session_state.STATE_CODE, LNG, LAT, st.session_state.formatted_tract)
         
         st.session_state.fig2 = county_map(st.session_state.YEAR, st.session_state.COUNTY_LABEL, st.session_state.STATE_CODE, st.session_state.COUNTY_CODE)
 
-        if st.session_state.MMSA is not None:
+        if st.session_state.MMSA_CODE is not None:
             st.session_state.fig3 = mmsa_map(st.session_state.YEAR, st.session_state.MMSA_LABEL)
 
     else:
@@ -291,7 +291,7 @@ if st.session_state.data is not None and st.session_state.fig1 is not None \
     st.subheader(f"Demographic Summary for {st.session_state.ADDRESS}")
     st.write(f"Census Tract: {st.session_state.formatted_tract.split(";")[0]}")
     st.write(f"County (Housing Market Area): {st.session_state.COUNTY_LABEL}")
-    if st.session_state.MMSA is None:
+    if st.session_state.MMSA_CODE is None:
         st.write("No Metro/Micropolitan Statistical Area to calculate Expanded Housing Market Area")
     else:
         st.write(f"Metro/Micropolitan Statistical Area (Expanded Housing Market Area): {st.session_state.MMSA_LABEL}")
@@ -309,5 +309,5 @@ if st.session_state.data is not None and st.session_state.fig1 is not None \
 
     display_map(st.session_state.fig2, st.session_state.COUNTY_LABEL)
 
-    if st.session_state.MMSA is not None:
+    if st.session_state.MMSA_CODE is not None:
         display_map(st.session_state.fig3, st.session_state.MMSA_LABEL)
